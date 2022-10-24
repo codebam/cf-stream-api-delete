@@ -30,26 +30,22 @@ const key = "";
         );
       }
     })
-    .then((ids) =>
-      Promise.all(
-        ids.map((id) =>
-          fetch(
-            new Request(
-              new URL(`https://${url}/accounts/${account_id}/stream/${id}`),
-              {
-                method: "DELETE",
-                headers: new Headers({
-                  Authorization: `Bearer ${key}`,
-                  "Content-Type": "application/json",
-                }),
-              }
-            )
-          )
-        )
-      ).then((responses) =>
-        responses.forEach(async (response) =>
-          console.log(await response.json())
+    .map((id) =>
+      fetch(
+        new Request(
+          new URL(`https://${url}/accounts/${account_id}/stream/${id}`),
+          {
+            method: "DELETE",
+            headers: new Headers({
+              Authorization: `Bearer ${key}`,
+              "Content-Type": "application/json",
+            }),
+          }
         )
       )
+    )
+    .then((requests) => Promise.all(requests))
+    .then((responses) =>
+      responses.forEach(async (response) => console.log(await response.json()))
     )) ||
   console.log("specify how many to delete\nnode index.js 1");
