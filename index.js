@@ -20,7 +20,7 @@ const key = "";
   )
     .then((response) => response.json())
     .then((results) => {
-      if (!results.result[0]?.uid) {
+      if (!results.result?.[0]?.uid) {
         console.error("uid not found in response. can't continue, exiting.");
         process.exit(1);
       } else {
