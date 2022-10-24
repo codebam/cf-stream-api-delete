@@ -48,15 +48,15 @@ const key = "";
         }))
         .map(
           (request) => async () =>
-            ((fetch_handler) =>
-              fetch_handler(request.request) &&
-              Promise.reject({ fetch_handler, ...request }))(async (request) =>
-              fetch(request).then(
-                async (response) =>
-                  console.log(await response.clone().json()) ||
-                  response.clone().json().errors
-              )
-            ) || response
+            ((fetch_handler) => fetch_handler(request, fetch_handler))(
+              async (request, fetch_handler) =>
+                fetch(request.request).then(
+                  async (response) =>
+                    console.log(await response.clone().json()) ||
+                    (response.clone().json().errors ??
+                      Promise.reject({ fetch_handler, request }))
+                ) || response
+            )
         )
     )
 ).then((requests) =>
@@ -65,10 +65,10 @@ const key = "";
     .then(async (rejected) => {
       for await (const _ of rejected.map((rejected) =>
         rejected.reason
-          .fetch_handler(rejected.reason.request)
-          .catch(
+          .fetch_handler(rejected.reason.request, rejected.reason.fetch_handler)
+          .catch((e) =>
             console.error(
-              `request to delete ${rejected.reason.id} failed both async and serial`
+              `request to delete ${e.request.id} failed both async and serial`
             )
           )
       )) {
