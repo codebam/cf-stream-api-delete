@@ -51,4 +51,5 @@ const key = "";
           console.log(await response.json())
         )
       )
-    )) | console.log("specify how many to delete\nnode index.js 1");
+    )) ||
+  console.log("specify how many to delete\nnode index.js 1");
