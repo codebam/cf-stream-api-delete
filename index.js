@@ -31,30 +31,32 @@ const key = "";
         );
       }
     })
-    .map(
-      (id) =>
-        new Request(
-          new URL(`https://${url}/accounts/${account_id}/stream/${id}`),
-          {
-            method: "DELETE",
-            headers: new Headers({
-              Authorization: `Bearer ${key}`,
-              "Content-Type": "application/json",
-            }),
-          }
-        )
+    .then((ids) =>
+      ids.map(
+        (id) =>
+          new Request(
+            new URL(`https://${url}/accounts/${account_id}/stream/${id}`),
+            {
+              method: "DELETE",
+              headers: new Headers({
+                Authorization: `Bearer ${key}`,
+                "Content-Type": "application/json",
+              }),
+            }
+          )
+      )
     )
     .then((requests) =>
-      requests.map(async (request) =>
+      requests.map((request) =>
         fetch(request).then(
-          (response) =>
+          async (response) =>
             ((response.clone().json().status != 200 ??
               console.error(
                 `received status ${
                   response.clone().json().status
                 }, trying serially...`
               )) &&
-              new Promise().reject()) ||
+              Promise.reject()) ||
             response
         )
       )
