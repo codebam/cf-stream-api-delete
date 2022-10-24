@@ -3,7 +3,8 @@ const email = "";
 const account_id = "";
 const key = "";
 
-(process.argv[2] &&
+(
+  process.argv[2] &&
   fetch(
     new Request(
       new URL(
@@ -30,8 +31,8 @@ const key = "";
         );
       }
     })
-    .map((id) =>
-      fetch(
+    .map(
+      (id) =>
         new Request(
           new URL(`https://${url}/accounts/${account_id}/stream/${id}`),
           {
@@ -42,10 +43,28 @@ const key = "";
             }),
           }
         )
+    )
+    .then((requests) =>
+      requests.map(async (request) =>
+        fetch(request).then(
+          (response) =>
+            ((response.clone().json().status != 200 ??
+              console.error(
+                `received status ${
+                  response.clone().json().status
+                }, trying serially...`
+              )) &&
+              new Promise().reject()) ||
+            response
+        )
       )
     )
-    .then((requests) => Promise.all(requests))
     .then((responses) =>
-      responses.forEach(async (response) => console.log(await response.json()))
-    )) ||
-  console.log("specify how many to delete\nnode index.js 1");
+      Promise.all(responses).catch(async () => {
+        for await (const _ of responses) {
+        }
+      })
+    )
+).then((responses) =>
+  responses.forEach(async (response) => console.log(await response.json()))
+) || console.log("specify how many to delete\nnode index.js 1");
