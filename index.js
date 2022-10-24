@@ -18,24 +18,7 @@ const key = "";
       }
     )
   )
-    .then((response) => response.body)
-    .then(
-      new ReadableStream({
-        start(controller) {
-          function push() {
-            reader.read().then(({ done, value }) => {
-              if (done) {
-                controller.close();
-                return;
-              }
-            });
-            controller.enqueue(value);
-            push();
-          }
-        },
-      })
-    )
-    .then((stream) => new Response(stream).json())
+    .then(async (response) => await response.json())
     .then((results) =>
       results.result.reduce(
         (previous, current) => [...previous, current.uid],
