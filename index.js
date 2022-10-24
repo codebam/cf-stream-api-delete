@@ -20,8 +20,8 @@ const key = "";
     )
   )
     .then((response) => response.json())
-    .then((results) => {
-      if (!results.result?.[0]?.uid) {
+    .then(async (results) => {
+      if (!(await results.result?.[0]?.uid)) {
         console.error("uid not found in response. can't continue, exiting.");
         process.exit(1);
       } else {
@@ -32,9 +32,10 @@ const key = "";
       }
     })
     .then((ids) =>
-      ids.map(
-        (id) =>
-          new Request(
+      ids
+        .map((id) => ({
+          id,
+          request: new Request(
             new URL(`https://${url}/accounts/${account_id}/stream/${id}`),
             {
               method: "DELETE",
@@ -43,30 +44,34 @@ const key = "";
                 "Content-Type": "application/json",
               }),
             }
-          )
-      )
-    )
-    .then((requests) =>
-      requests.map((request) =>
-        fetch(request).then(
-          async (response) =>
-            ((response.clone().json().status != 200 ??
-              console.error(
-                `received status ${
-                  response.clone().json().status
-                }, trying serially...`
-              )) &&
-              Promise.reject()) ||
-            response
+          ),
+        }))
+        .map(
+          (request) => async () =>
+            ((fetch_handler) =>
+              fetch_handler(request.request) &&
+              Promise.reject({ fetch_handler, ...request }))(async (request) =>
+              fetch(request).then(
+                async (response) =>
+                  console.log(await response.clone().json()) ||
+                  response.clone().json().errors
+              )
+            ) || response
         )
-      )
     )
-    .then((responses) =>
-      Promise.all(responses).catch(async () => {
-        for await (const _ of responses) {
-        }
-      })
-    )
-).then((responses) =>
-  responses.forEach(async (response) => console.log(await response.json()))
+).then((requests) =>
+  Promise.allSettled(requests.map((request) => request()))
+    .then((results) => results.filter((result) => result.status === "rejected"))
+    .then(async (rejected) => {
+      for await (const _ of rejected.map((rejected) =>
+        rejected.reason
+          .fetch_handler(rejected.reason.request)
+          .catch(
+            console.error(
+              `request to delete ${rejected.reason.id} failed both async and serial`
+            )
+          )
+      )) {
+      }
+    })
 ) || console.log("specify how many to delete\nnode index.js 1");
