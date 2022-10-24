@@ -1,0 +1,66 @@
+const url = "api.cloudflare.com/client/v4";
+const email = "";
+const account_id = "";
+const key = "";
+
+(process.argv[2] &&
+  fetch(
+    new Request(
+      new URL(
+        `https://${url}/accounts/${account_id}/stream?` +
+          new URLSearchParams({ limit: process.argv[2] })
+      ),
+      {
+        headers: new Headers({
+          Authorization: `Bearer ${key}`,
+          "Content-Type": "application/json",
+        }),
+      }
+    )
+  )
+    .then((response) => response.body)
+    .then(
+      new ReadableStream({
+        start(controller) {
+          function push() {
+            reader.read().then(({ done, value }) => {
+              if (done) {
+                controller.close();
+                return;
+              }
+            });
+            controller.enqueue(value);
+            push();
+          }
+        },
+      })
+    )
+    .then((stream) => new Response(stream).json())
+    .then((results) =>
+      results.result.reduce(
+        (previous, current) => [...previous, current.uid],
+        []
+      )
+    )
+    .then((ids) =>
+      Promise.all(
+        ids.map((id) =>
+          fetch(
+            new Request(
+              new URL(`https://${url}/accounts/${account_id}/stream/${id}`),
+              {
+                method: "DELETE",
+                headers: new Headers({
+                  Authorization: `Bearer ${key}`,
+                  "Content-Type": "application/json",
+                }),
+              }
+            )
+          )
+        )
+      ).then((responses) =>
+        responses.forEach(async (response) =>
+          console.log(await response.json())
+        )
+      )
+    )) | console.log("specify how many to delete\nnode index.js 1");
