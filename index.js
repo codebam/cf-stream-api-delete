@@ -19,12 +19,17 @@ const key = "";
     )
   )
     .then(async (response) => await response.json())
-    .then((results) =>
-      results.result.reduce(
-        (previous, current) => [...previous, current.uid],
-        []
-      )
-    )
+    .then((results) => {
+      if (!results.result[0]?.uid) {
+        console.error("uid not found in response. can't continue, exiting.");
+        process.exit(1);
+      } else {
+        return results.result.reduce(
+          (previous, current) => [...previous, current.uid],
+          []
+        );
+      }
+    })
     .then((ids) =>
       Promise.all(
         ids.map((id) =>
