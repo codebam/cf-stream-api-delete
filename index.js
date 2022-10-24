@@ -1,3 +1,6 @@
+process.removeAllListeners("warning");
+// disable experimental fetch warning
+
 const url = "api.cloudflare.com/client/v4";
 const email = "";
 const account_id = "";
