@@ -26,10 +26,7 @@ const key = "";
       if (!(await results.result?.[0]?.uid)) {
         throw "uid not found in response. can't continue, exiting.";
       } else {
-        return results.result.reduce(
-          (previous, current) => [...previous, current.uid],
-          []
-        );
+        return results.result.map((result) => result.uid);
       }
     })
     .catch((e) => console.error(e) || process.exit(1))
