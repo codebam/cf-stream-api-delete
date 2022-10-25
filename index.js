@@ -51,7 +51,7 @@ const key = "";
         .map(
           (request) => () =>
             ((fetch_handler) => fetch_handler(request, fetch_handler))(
-              async (request, fetch_handler) =>
+              (request, fetch_handler) =>
                 fetch(request.request).then(async (response) =>
                   response.status === 200
                     ? console.log(`deleted ${request.id}.`)
