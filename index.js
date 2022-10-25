@@ -6,8 +6,10 @@ const email = "";
 const account_id = "";
 const key = "";
 
-(
-  process.argv[2] &&
+const catch_handler = (exception, exit = false) =>
+  console.error(...exception) || (exit && process.exit(1));
+
+(process.argv[2] &&
   fetch(
     new Request(
       new URL(
@@ -22,11 +24,10 @@ const key = "";
       }
     )
   )
-    .then((response) => response.json())
+    .then((response) => response.json().catch(catch_handler))
     .then(async (results) => {
       if (!(await results.result?.[0]?.uid)) {
-        console.error("uid not found in response. can't continue, exiting.");
-        process.exit(1);
+        throw "uid not found in response. can't continue, exiting.";
       } else {
         return results.result.reduce(
           (previous, current) => [...previous, current.uid],
@@ -34,6 +35,7 @@ const key = "";
         );
       }
     })
+    .catch((e) => catch_handler(e, true))
     .then((ids) =>
       ids
         .map((id) => ({
@@ -55,26 +57,45 @@ const key = "";
               async (request, fetch_handler) =>
                 fetch(request.request).then(
                   async (response) =>
-                    console.log(await response.clone().json()) ||
-                    (response.clone().json().errors ??
-                      Promise.reject({ fetch_handler, request }))
-                ) || response
-            )
+                    console.log(
+                      response.status === 200 && `deleted ${request.id}`
+                    ) ??
+                    (response.status != 200 &&
+                      (console.error(
+                        (
+                          await response
+                            .clone()
+                            .json()
+                            .catch((e) => catch_handler([response.clone(), e]))
+                        ).messages?.[0].message
+                      ) ||
+                        Promise.reject({ fetch_handler, request, response })))
+                )
+            ) || response
         )
     )
-).then((requests) =>
-  Promise.allSettled(requests.map((request) => request()))
-    .then((results) => results.filter((result) => result.status === "rejected"))
-    .then(async (rejected) => {
-      for await (const _ of rejected.map((rejected) =>
-        rejected.reason
-          .fetch_handler(rejected.reason.request, rejected.reason.fetch_handler)
-          .catch((e) =>
-            console.error(
-              `request to delete ${e.request.id} failed both async and serial`
-            )
-          )
-      )) {
-      }
-    })
-) || console.log("specify how many to delete\nnode index.js 1");
+    .then((requests) =>
+      Promise.allSettled(requests.map((request) => request()))
+        .then((results) =>
+          results.filter((result) => result.status === "rejected")
+        )
+        .then(async (rejected) => {
+          for await (const _ of rejected.map((rejected) =>
+            rejected.reason
+              .fetch_handler(
+                rejected.reason.request,
+                rejected.reason.fetch_handler
+              )
+              .catch(async (e) =>
+                catch_handler([
+                  await e.response
+                    .json()
+                    .catch((e) => catch_handler([e.response.clone(), e])),
+                  `request to delete ${e.request.id} failed.`,
+                ])
+              )
+          )) {
+          }
+        })
+    )) ||
+  console.log("specify how many to delete\nnode index.js 1");
