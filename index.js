@@ -6,9 +6,6 @@ const email = "";
 const account_id = "";
 const key = "";
 
-const catch_handler = (exception, exit = false) =>
-  console.error(...exception) || (exit && process.exit(1));
-
 (process.argv[2] &&
   fetch(
     new Request(
@@ -24,7 +21,7 @@ const catch_handler = (exception, exit = false) =>
       }
     )
   )
-    .then((response) => response.json().catch(catch_handler))
+    .then((response) => response.json().catch(console.error))
     .then(async (results) => {
       if (!(await results.result?.[0]?.uid)) {
         throw "uid not found in response. can't continue, exiting.";
@@ -35,7 +32,7 @@ const catch_handler = (exception, exit = false) =>
         );
       }
     })
-    .catch((e) => catch_handler([e], true))
+    .catch((e) => console.error(e) || process.exit(1))
     .then((ids) =>
       ids
         .map((id) => ({
@@ -64,7 +61,7 @@ const catch_handler = (exception, exit = false) =>
                           await response
                             .clone()
                             .json()
-                            .catch((e) => catch_handler([response.clone(), e]))
+                            .catch((e) => console.error([response.clone(), e]))
                         ).messages?.[0].message
                       ) || Promise.reject({ fetch_handler, request, response })
                 )
