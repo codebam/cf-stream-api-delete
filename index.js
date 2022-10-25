@@ -49,7 +49,7 @@ const key = "";
           ),
         }))
         .map(
-          (request) => async () =>
+          (request) => () =>
             ((fetch_handler) => fetch_handler(request, fetch_handler))(
               async (request, fetch_handler) =>
                 fetch(request.request).then(async (response) =>
