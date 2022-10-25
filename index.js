@@ -35,7 +35,7 @@ const catch_handler = (exception, exit = false) =>
         );
       }
     })
-    .catch((e) => catch_handler(e, true))
+    .catch((e) => catch_handler([e], true))
     .then((ids) =>
       ids
         .map((id) => ({
