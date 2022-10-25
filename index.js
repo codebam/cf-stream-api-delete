@@ -61,7 +61,7 @@ const key = "";
                           await response
                             .clone()
                             .json()
-                            .catch((e) => console.error([response.clone(), e]))
+                            .catch((e) => console.error(response.clone(), e))
                         ).messages?.[0].message
                       ) || Promise.reject({ fetch_handler, request, response })
                 )
