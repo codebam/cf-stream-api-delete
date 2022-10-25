@@ -81,12 +81,12 @@ const key = "";
                 rejected.reason.fetch_handler
               )
               .catch(async (e) =>
-                catch_handler([
+                console.error(
                   await e.response
                     .json()
                     .catch((e) => console.error(e.response.clone(), e)),
-                  `request to delete ${e.request.id} failed.`,
-                ])
+                  `request to delete ${e.request.id} failed.`
+                )
               )
           )) {
           }
