@@ -55,22 +55,18 @@ const catch_handler = (exception, exit = false) =>
           (request) => async () =>
             ((fetch_handler) => fetch_handler(request, fetch_handler))(
               async (request, fetch_handler) =>
-                fetch(request.request).then(
-                  async (response) =>
-                    ((response.status === 200 &&
-                      console.log(`deleted ${request.id}.`) &&
-                      true) ||
-                      console.error(`failed to delete ${request.id}.`)) ??
-                    (response.status != 200 &&
-                      (console.error(
+                fetch(request.request).then(async (response) =>
+                  response.status === 200
+                    ? console.log(`deleted ${request.id}.`)
+                    : console.error(
+                        `failed to delete ${request.id}.`,
                         (
                           await response
                             .clone()
                             .json()
                             .catch((e) => catch_handler([response.clone(), e]))
                         ).messages?.[0].message
-                      ) ||
-                        Promise.reject({ fetch_handler, request, response })))
+                      ) || Promise.reject({ fetch_handler, request, response })
                 )
             ) || response
         )
