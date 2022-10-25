@@ -58,7 +58,8 @@ const catch_handler = (exception, exit = false) =>
                 fetch(request.request).then(
                   async (response) =>
                     ((response.status === 200 &&
-                      console.log(`deleted ${request.id}`)) ||
+                      console.log(`deleted ${request.id}.`) &&
+                      true) ||
                       console.error(`failed to delete ${request.id}.`)) ??
                     (response.status != 200 &&
                       (console.error(
