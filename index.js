@@ -84,7 +84,7 @@ const key = "";
                 catch_handler([
                   await e.response
                     .json()
-                    .catch((e) => catch_handler([e.response.clone(), e])),
+                    .catch((e) => console.error(e.response.clone(), e)),
                   `request to delete ${e.request.id} failed.`,
                 ])
               )
